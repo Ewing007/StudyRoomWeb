@@ -1,0 +1,270 @@
+<template>
+  <div id="header">
+    <el-row>
+      <el-col :span="22">
+        <el-menu
+          :default-active="activeIndex"
+          mode="horizontal"
+          :ellipsis="true"
+          @select="handleSelect"
+          style="max-width: 100%; display: flex; padding: 0"
+          :router="true"
+        >
+          <el-menu-item>
+            <img
+              style="width: 100px"
+              src="../assets/logo.svg"
+              alt="StudyRoom logo"
+            />
+          </el-menu-item>
+          <el-menu-item
+            style="padding-right: 50px; padding-left: 50px"
+            v-for="route in visibleRouters"
+            :key="route.path"
+            :index="route.path"
+            >{{ route.name }}</el-menu-item
+          >
+        </el-menu>
+      </el-col>
+      <el-col :span="2" style="align-content: center">
+        <div style="display: flex; align-items: center; position: relative">
+          <el-avatar
+            size="large"
+            :src="store.state.user.loginUser.avatar"
+            @mouseenter="showMenu = true"
+            @mouseleave="hideMenu"
+            >{{ loginStatus ? "" : "未登录" }}</el-avatar
+          >
+          <div
+            v-if="showMenu"
+            class="menu-popup"
+            @mouseenter="showMenu = true"
+            @mouseleave="hideMenu"
+          >
+            <template v-if="!loginStatus">
+              <el-button
+                type="primary"
+                @click="openLoginDialog"
+                aria-label="登录"
+                >登录</el-button
+              >
+            </template>
+            <template v-else>
+              <el-button @click="goToProfile" aria-label="个人中心"
+                >个人中心</el-button
+              >
+              <el-button @click="logout" aria-label="退出登录"
+                >退出登录</el-button
+              >
+            </template>
+          </div>
+        </div>
+      </el-col>
+    </el-row>
+
+    <!-- 登录弹窗 -->
+    <el-dialog
+      v-model="loginDialogVisible"
+      width="400px"
+      :before-close="closeLoginDialog"
+      class="login-dialog"
+    >
+      <LoginForm
+        v-model="loginDialogVisible"
+        @login-success="handleLoginSuccess"
+        @register-open="pushRegisterSuccess"
+        @register="handleRegister"
+      />
+    </el-dialog>
+
+    <!-- 注册弹窗 -->
+    <el-dialog
+      v-model="registerDialogVisible"
+      width="400px"
+      :before-close="closeLoginDialog"
+      class="login-dialog"
+    >
+      <RegisterForm
+        v-model="registerDialogVisible"
+        @login-open="pushLoginSuccess"
+        @register="handleLogin"
+      />
+    </el-dialog>
+  </div>
+</template>
+
+<script lang="ts" setup>
+import { computed, ref } from "vue";
+import { routes } from "@/router/routes";
+import router from "@/router";
+import { useStore } from "vuex";
+import LoginForm from "../views/UserLogin.vue";
+import RegisterForm from "../views/UserRegister.vue";
+import { Service } from "../../generated";
+import { ElMessage } from "element-plus";
+
+const activeIndex = ref(["/"]);
+router.afterEach((to) => {
+  activeIndex.value = [to.path];
+});
+
+const showMenu = ref(false);
+const loginDialogVisible = ref(false);
+const registerDialogVisible = ref(false);
+const handleSelect = (key: string, keyPath: string[]) => {
+  console.log(key, keyPath);
+};
+
+const handleLoginSuccess = () => {
+  loginDialogVisible.value = false;
+  // showMenu.value = false;
+};
+const handleRegisterSuccess = () => {
+  registerDialogVisible.value = false;
+  showMenu.value = false;
+};
+const pushRegisterSuccess = () => {
+  loginDialogVisible.value = false;
+  registerDialogVisible.value = true;
+  // showMenu.value = false;
+};
+
+const pushLoginSuccess = () => {
+  loginDialogVisible.value = true;
+  registerDialogVisible.value = false;
+};
+const openLoginDialog = () => {
+  loginDialogVisible.value = true;
+};
+
+const hideMenu = () => {
+  setTimeout(() => {
+    showMenu.value = false;
+  }, 1000);
+};
+
+const goToProfile = () => {
+  router.push("/userProfile");
+};
+
+const logout = async () => {
+  const resp = await Service.logout();
+  if (resp.code === "200") {
+    await store.dispatch("user/logout");
+    ElMessage.success("退出成功");
+    await router.push("/");
+  } else {
+    ElMessage.error("退出失败");
+  }
+};
+
+const store = useStore();
+const roles = computed(() => store.state.user.loginUser.roles);
+const loginStatus = computed(() => store.state.user.loginUser.isLogin);
+// 过滤出当前用户可见的路由
+const visibleRouters = computed(() => {
+  return routes.filter((item) => {
+    // 如果当前用户有访问权限
+    if (item.meta?.roles?.some((role) => roles.value.includes(role))) {
+      // 管理员可见所有路由
+      if (roles.value.includes("ADMIN")) {
+        return true;
+      }
+      // 普通用户只能看到 hidden 为 false 的路由
+      if (!item.meta?.hidden) {
+        return true;
+      }
+    } else if (!item.meta?.hidden) {
+      return true;
+    }
+    return false;
+  });
+});
+
+const handleRegister = () => {
+  loginDialogVisible.value = false;
+};
+
+const handleLogin = () => {
+  loginDialogVisible.value = false;
+};
+</script>
+
+<style scoped>
+#header .el-menu--horizontal > .el-menu-item:nth-child(1) {
+  margin-right: 90px;
+}
+
+#header .el-menu--horizontal.el-menu {
+  border-bottom: none;
+}
+#header {
+  box-shadow: #eee 1px 1px 5px;
+  border-bottom: 1px solid var(--el-menu-border-color);
+}
+
+#header .el-menu-item:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  animation: bounce 0.5s;
+}
+
+@keyframes bounce {
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-5px);
+  }
+  60% {
+    transform: translateY(-2px);
+  }
+}
+
+.menu-popup {
+  position: absolute;
+  top: 80px;
+  right: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  padding: 10px;
+  min-width: 150px;
+  z-index: 10;
+}
+
+.login-dialog {
+  background: linear-gradient(135deg, #ffffff, #e0e0e0);
+}
+
+.login-dialog .el-dialog__header {
+  background: linear-gradient(135deg, #ffffff, #e0e0e0);
+}
+
+.login-dialog .el-dialog__body {
+  background: linear-gradient(135deg, #ffffff, #e0e0e0);
+  padding: 20px;
+}
+
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: auto;
+  background: none;
+}
+
+.register-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: auto;
+  background: none;
+}
+.menu-popup .el-button {
+  margin-left: 25%;
+  margin-right: 50%;
+}
+</style>

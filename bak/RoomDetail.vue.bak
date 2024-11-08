@@ -1,0 +1,425 @@
+<!--<template>-->
+<!--  <div class="room-details-page">-->
+<!--    <el-row :gutter="20" class="flex-container">-->
+<!--      &lt;!&ndash; 自习室详情信息部分 &ndash;&gt;-->
+<!--      <el-col :span="8" class="flex-item">-->
+<!--        <el-card shadow="hover" class="room-info-card">-->
+<!--          <div class="room-info">-->
+<!--            <img :src="roomInfo.imageUrl" alt="自习室图片" class="room-image" />-->
+<!--            <div class="info-item">-->
+<!--              <strong>位置:</strong>-->
+<!--              <el-tag type="primary" effect="dark">{{-->
+<!--                roomInfo.location-->
+<!--              }}</el-tag>-->
+<!--            </div>-->
+<!--            <div class="info-item">-->
+<!--              <strong>容纳人数:</strong>-->
+<!--              <el-tag type="primary" class="capacity-badge" effect="dark">-->
+<!--                {{ roomInfo.capacity }}-->
+<!--              </el-tag>-->
+<!--            </div>-->
+<!--            <div class="info-item">-->
+<!--              <strong>设施:</strong>-->
+<!--              <el-tag-->
+<!--                v-for="amenity in roomInfo.amenities.split(',')"-->
+<!--                :key="amenity"-->
+<!--                type="success"-->
+<!--                effect="dark"-->
+<!--                class="amenity-tag"-->
+<!--              >-->
+<!--                {{ amenity.trim() }}-->
+<!--              </el-tag>-->
+<!--            </div>-->
+<!--            <div class="info-item">-->
+<!--              <strong>描述:</strong>-->
+<!--              <el-tag type="danger" effect="dark">-->
+<!--                {{ roomInfo.description }}-->
+<!--              </el-tag>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </el-card>-->
+<!--      </el-col>-->
+
+<!--      &lt;!&ndash; 座位选择部分 &ndash;&gt;-->
+<!--      <el-col :span="16" class="flex-item">-->
+<!--        <el-card shadow="hover" class="seat-selection-card">-->
+<!--          <div class="seat-selection">-->
+<!--            <h1 class="section-title">查看座位空闲状态</h1>-->
+<!--            <div class="select-container">-->
+<!--              <el-select-->
+<!--                v-model="selectedDate"-->
+<!--                placeholder="选择预约日期"-->
+<!--                @change="fetchTimeSlots"-->
+<!--                class="date-select"-->
+<!--              >-->
+<!--                <el-option-->
+<!--                  v-for="date in availableDates"-->
+<!--                  :key="date"-->
+<!--                  :label="date"-->
+<!--                  :value="date"-->
+<!--                />-->
+<!--              </el-select>-->
+<!--              <el-select-->
+<!--                v-model="selectedTimeSlot"-->
+<!--                placeholder="选择预约时间段"-->
+<!--                @change="fetchSeats"-->
+<!--                class="time-select"-->
+<!--              >-->
+<!--                <el-option-->
+<!--                  v-for="timeSlot in timeSlots"-->
+<!--                  :key="timeSlot"-->
+<!--                  :label="timeSlot"-->
+<!--                  :value="timeSlot"-->
+<!--                />-->
+<!--              </el-select>-->
+<!--            </div>-->
+
+<!--            <el-divider></el-divider>-->
+
+<!--            &lt;!&ndash; 座位状态图标说明 &ndash;&gt;-->
+<!--            <div class="seat-status-indicators">-->
+<!--              <div class="status-item">-->
+<!--                <img-->
+<!--                  :src="getSeatIcon('0')"-->
+<!--                  alt="可预约图标"-->
+<!--                  class="status-icon"-->
+<!--                />-->
+<!--                可预约-->
+<!--              </div>-->
+<!--              <div class="status-item">-->
+<!--                <img-->
+<!--                  :src="getSeatIcon('1')"-->
+<!--                  alt="已预约图标"-->
+<!--                  class="status-icon"-->
+<!--                />-->
+<!--                已预约-->
+<!--              </div>-->
+<!--              <div class="status-item">-->
+<!--                <img-->
+<!--                  :src="getSeatIcon('2')"-->
+<!--                  alt="不可预约图标"-->
+<!--                  class="status-icon"-->
+<!--                />-->
+<!--                不可预约-->
+<!--              </div>-->
+<!--            </div>-->
+
+<!--            <el-divider></el-divider>-->
+
+<!--            <div class="seats-layout" v-if="filteredSeats.length > 0">-->
+<!--              <div-->
+<!--                v-for="seat in filteredSeats"-->
+<!--                :key="seat.seatId"-->
+<!--                class="seat"-->
+<!--                @click="bookSeat(seat)"-->
+<!--              >-->
+<!--                <img-->
+<!--                  :src="getSeatIcon(seat.status)"-->
+<!--                  alt="座位状态图标"-->
+<!--                  class="seat-icon"-->
+<!--                />-->
+<!--                <span class="seat-number">{{ seat.seatNumber }}</span>-->
+<!--              </div>-->
+<!--            </div>-->
+
+<!--            <div v-else class="no-seats">-->
+<!--              <p>暂无可用座位</p>-->
+<!--            </div>-->
+
+<!--            &lt;!&ndash; 占位元素，保持高度一致 &ndash;&gt;-->
+<!--            <div class="placeholder" v-if="filteredSeats.length === 0"></div>-->
+<!--          </div>-->
+<!--        </el-card>-->
+<!--      </el-col>-->
+<!--    </el-row>-->
+<!--  </div>-->
+<!--</template>-->
+
+<!--<script lang="ts" setup>-->
+<!--import { ref, computed, onMounted, watch } from "vue";-->
+<!--import { ElMessage, ElBadge, ElTag } from "element-plus";-->
+<!--import { Service } from "../../generated/services/Service";-->
+<!--import { useRoute } from "vue-router";-->
+
+<!--interface Seat {-->
+<!--  seatId: string;-->
+<!--  roomId: string;-->
+<!--  seatNumber: string;-->
+<!--  status: string;-->
+<!--  date?: string;-->
+<!--  slotId?: string;-->
+<!--}-->
+
+<!--const route = useRoute();-->
+<!--const roomId = ref(route.params.id as string);-->
+<!--const roomInfo = ref();-->
+<!--const selectedDate = ref("");-->
+<!--const selectedTimeSlot = ref("");-->
+<!--const availableDates = ref<string[]>([]);-->
+<!--const timeSlots = ref<string[]>([]);-->
+<!--const seats = ref<Seat[]>([]);-->
+<!--const userReservedSeats = ref<Seat[]>([]); // 用户已预约的座位-->
+
+<!--const fetchAvailableDates = async () => {-->
+<!--  try {-->
+<!--    const response = await Service.getDateByRoomId(roomId.value);-->
+<!--    if (response.code === "200") {-->
+<!--      availableDates.value = response.data;-->
+<!--    }-->
+<!--  } catch (error) {-->
+<!--    ElMessage.error("获取可预约日期失败，请重试");-->
+<!--  }-->
+<!--};-->
+
+<!--const fetchTimeSlots = async () => {-->
+<!--  if (!selectedDate.value) return;-->
+<!--  try {-->
+<!--    const response = await Service.getTimeSlotsByRoomId(roomId.value);-->
+<!--    if (response.code === "200") {-->
+<!--      timeSlots.value = response.data;-->
+<!--    }-->
+<!--  } catch (error) {-->
+<!--    ElMessage.error("获取可预约时间段失败，请重试");-->
+<!--  }-->
+<!--};-->
+
+<!--const fetchSeats = async () => {-->
+<!--  if (!selectedDate.value || !selectedTimeSlot.value) return;-->
+<!--  try {-->
+<!--    const response = await Service.methodToGetSeatInfoByDateAndTime({-->
+<!--      roomId: roomId.value,-->
+<!--      date: selectedDate.value,-->
+<!--      slotId: selectedTimeSlot.value,-->
+<!--    });-->
+<!--    if (response.code === "200") {-->
+<!--      seats.value = response.data;-->
+<!--    }-->
+<!--  } catch (error) {-->
+<!--    ElMessage.error("获取座位信息失败，请重试");-->
+<!--  }-->
+<!--};-->
+
+<!--const fetchUserReservedSeats = async () => {-->
+<!--  // try {-->
+<!--  //   const response = await Service.getUserReservedSeats(); // 获取用户已预约的座位-->
+<!--  //   if (response.code === "200") {-->
+<!--  //     userReservedSeats.value = response.data;-->
+<!--  //   }-->
+<!--  // } catch (error) {-->
+<!--  //   ElMessage.error("获取用户已预约座位失败，请重试");-->
+<!--  // }-->
+<!--};-->
+
+<!--const filteredSeats = computed(() => seats.value);-->
+
+<!--const bookSeat = async (seat: Seat) => {-->
+<!--  if (seat.status === "1" || seat.status === "2") {-->
+<!--    ElMessage.warning("该座位已被预约或不可选");-->
+<!--    return;-->
+<!--  }-->
+
+<!--  // 检查用户在选定的时间段内是否已经预约了其他座位-->
+<!--  const isAlreadyBooked = userReservedSeats.value.some(-->
+<!--    (reservedSeat) =>-->
+<!--      reservedSeat.roomId === roomId.value &&-->
+<!--      reservedSeat.date === selectedDate.value &&-->
+<!--      reservedSeat.slotId === selectedTimeSlot.value-->
+<!--  );-->
+
+<!--  if (isAlreadyBooked) {-->
+<!--    ElMessage.warning("您在该时间段内已预约了一个座位，不能重复预约");-->
+<!--    return;-->
+<!--  }-->
+
+<!--  // try {-->
+<!--  // 这里可以调用实际的预约接口-->
+<!--  // const response = await Service.bookSeat({-->
+<!--  //   seatId: seat.seatId,-->
+<!--  //   date: selectedDate.value,-->
+<!--  //   slotId: selectedTimeSlot.value,-->
+<!--  // });-->
+
+<!--  //   if (response.code === "200") {-->
+<!--  //     seat.status = "2"; // 假设预约成功后状态变为 "2"-->
+<!--  //     ElMessage.success("预约成功！");-->
+<!--  //     fetchUserReservedSeats(); // 更新用户已预约的座位信息-->
+<!--  //   } else {-->
+<!--  //     ElMessage.error("预约失败，请重试");-->
+<!--  //   }-->
+<!--  // } catch (error) {-->
+<!--  //   ElMessage.error("预约失败，请重试");-->
+<!--  // }-->
+<!--};-->
+
+<!--// 各个状态对应的图标-->
+<!--const seatIcons = {-->
+<!--  "0": new URL("../assets/seat-available.png", import.meta.url).href,-->
+<!--  "1": new URL("../assets/seat-reserved.png", import.meta.url).href,-->
+<!--  "2": new URL("../assets/seat-unavailable.png", import.meta.url).href,-->
+<!--};-->
+
+<!--const getSeatIcon = (status: string) =>-->
+<!--  seatIcons[status as keyof typeof seatIcons] || seatIcons["0"];-->
+
+<!--// 监听路由变化以获取新的自习室信息-->
+<!--watch(-->
+<!--  route,-->
+<!--  (newRoute) => {-->
+<!--    roomId.value = newRoute.params.id as string;-->
+<!--    const roomInfoString = newRoute.query.roomInfo as string;-->
+<!--    if (roomInfoString) {-->
+<!--      roomInfo.value = JSON.parse(roomInfoString);-->
+<!--    }-->
+<!--    fetchAvailableDates();-->
+<!--  },-->
+<!--  { immediate: true }-->
+<!--);-->
+
+<!--onMounted(() => {-->
+<!--  fetchAvailableDates();-->
+<!--  fetchUserReservedSeats(); // 初始化时获取用户已预约的座位-->
+<!--});-->
+<!--</script>-->
+
+<!--<style scoped>-->
+<!--.room-details-page {-->
+<!--  padding: 20px;-->
+<!--  min-height: 100vh;-->
+<!--  display: flex;-->
+<!--  justify-content: center;-->
+<!--  align-items: flex-start;-->
+<!--}-->
+
+<!--.flex-container {-->
+<!--  display: flex;-->
+<!--  flex-wrap: wrap;-->
+<!--  justify-content: space-between;-->
+<!--}-->
+
+<!--.flex-item {-->
+<!--  display: flex;-->
+<!--  flex-direction: column;-->
+<!--  height: 100%;-->
+<!--}-->
+
+<!--.room-info-card,-->
+<!--.seat-selection-card {-->
+<!--  width: 100%;-->
+<!--  max-width: 100%;-->
+<!--  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);-->
+<!--  border-radius: 12px;-->
+<!--  overflow: hidden;-->
+<!--  transition: box-shadow 0.3s;-->
+<!--  display: flex;-->
+<!--  flex-direction: column;-->
+<!--}-->
+
+<!--.room-info,-->
+<!--.seat-selection {-->
+<!--  padding: 20px;-->
+<!--  flex-grow: 1;-->
+<!--  background-color: #fff;-->
+<!--}-->
+
+<!--.room-name {-->
+<!--  font-size: 28px;-->
+<!--  margin-bottom: 10px;-->
+<!--  color: #333;-->
+<!--}-->
+
+<!--.room-image {-->
+<!--  width: 100%;-->
+<!--  height: auto;-->
+<!--  border-radius: 8px;-->
+<!--  margin-bottom: 20px;-->
+<!--}-->
+
+<!--.info-item {-->
+<!--  margin-bottom: 10px;-->
+<!--  font-size: 16px;-->
+<!--  color: #555;-->
+<!--}-->
+
+<!--.capacity-badge {-->
+<!--  margin-left: 5px;-->
+<!--}-->
+
+<!--.amenity-tag {-->
+<!--  margin-right: 5px;-->
+<!--}-->
+
+<!--.section-title {-->
+<!--  font-size: 24px;-->
+<!--  margin-bottom: 15px;-->
+<!--}-->
+
+<!--.select-container {-->
+<!--  display: flex;-->
+<!--  justify-content: space-between;-->
+<!--  margin-bottom: 15px;-->
+<!--}-->
+
+<!--.date-select,-->
+<!--.time-select {-->
+<!--  width: 45%;-->
+<!--}-->
+
+<!--.seat-status-indicators {-->
+<!--  display: flex;-->
+<!--  justify-content: space-around;-->
+<!--  margin-bottom: 20px;-->
+<!--}-->
+
+<!--.status-item {-->
+<!--  display: flex;-->
+<!--  align-items: center;-->
+<!--}-->
+
+<!--.status-icon {-->
+<!--  width: 20px;-->
+<!--  height: 20px;-->
+<!--  margin-right: 8px;-->
+<!--}-->
+
+<!--.seats-layout {-->
+<!--  display: flex;-->
+<!--  flex-wrap: wrap;-->
+<!--  gap: 10px;-->
+<!--  margin-bottom: 20px;-->
+<!--}-->
+
+<!--.seat {-->
+<!--  display: flex;-->
+<!--  flex-direction: column;-->
+<!--  align-items: center;-->
+<!--  justify-content: center;-->
+<!--  padding: 10px;-->
+<!--  border-radius: 8px;-->
+<!--  transition: transform 0.2s;-->
+<!--  cursor: pointer;-->
+<!--}-->
+
+<!--.seat:hover {-->
+<!--  transform: scale(1.05);-->
+<!--}-->
+
+<!--.seat-icon {-->
+<!--  width: 40px;-->
+<!--  height: 40px;-->
+<!--  margin-bottom: 5px;-->
+<!--}-->
+
+<!--.seat-number {-->
+<!--  font-size: 14px;-->
+<!--  text-align: center;-->
+<!--}-->
+
+<!--.no-seats {-->
+<!--  text-align: center;-->
+<!--  color: #888;-->
+<!--}-->
+
+<!--.placeholder {-->
+<!--  flex-grow: 1;-->
+<!--}-->
+<!--</style>-->
