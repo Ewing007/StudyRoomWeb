@@ -41,6 +41,7 @@ import {
   ReservationByUserReqDto,
   ReservationUpdateByAdminReqDto
 } from "../../generated";
+import { UpdateSeatByAdminReqDto } from "../../generated";
 
 export class Service {
   // /**
@@ -1256,6 +1257,22 @@ export class Service {
     return __request(OpenAPI, {
       method: 'POST',
       url: '/StudyRoom-User/api/front/admin/admin/all',
+      body: requestBody,
+      mediaType: 'application/json',
+    });
+  }
+  /**
+   * 管理员更新座位信息
+   * @param requestBody
+   * @returns ResultPage OK
+   * @throws ApiError
+   */
+  public static someMethodToUpdateSeatByAdmin(
+    requestBody: UpdateSeatByAdminReqDto,
+  ): CancelablePromise<ResultPage<any>> {
+    return __request(OpenAPI, {
+      method: 'PUT',
+      url: '/StudyRoom-User/api/front/admin/update_seat',
       body: requestBody,
       mediaType: 'application/json',
     });

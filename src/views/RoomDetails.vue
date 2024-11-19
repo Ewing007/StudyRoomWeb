@@ -112,7 +112,7 @@
 
             <div class="seats-layout" v-if="filteredSeats.length > 0">
               <div
-                v-for="seat in filteredSeats"
+                v-for="seat in seats"
                 :key="seat.seatId"
                 class="seat"
                 @click="bookSeat(seat)"
@@ -230,6 +230,9 @@ const fetchTimeSlots = async () => {
 const fetchSeats = async () => {
   if (!selectedDate.value || !selectedTimeSlotForFetch.value) return;
   try {
+    console.log(selectedDate.value);
+    console.log(selectedTimeSlotForFetch.value);
+    console.log("roomId:", roomId.value);
     const response = await Service.methodToGetSeatInfoByDateAndTime({
       roomId: roomId.value,
       date: selectedDate.value,
@@ -244,7 +247,7 @@ const fetchSeats = async () => {
 };
 
 const filteredSeats = computed(() =>
-  seats.value.filter((seat) => seat.status !== "2")
+  seats.value.filter((seat) => seat.status !== "3")
 );
 
 const bookSeat = (seat: Seat) => {
@@ -295,7 +298,7 @@ const confirmBooking = async () => {
       ElMessage.success("预约成功！");
       fetchSeats(); // 更新座位信息
     } else {
-      ElMessage.error("预约失败，请重试");
+      ElMessage.error(response.message);
     }
   } catch (error) {
     ElMessage.error("预约失败，请重试");

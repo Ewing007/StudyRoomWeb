@@ -165,6 +165,16 @@ export const routes: Array<RouteRecordRaw> = [
           hidden: true,
         },
       },
+      {
+        path: "/seatManage",
+        name: "座位管理",
+        component: () => import("../views/Admin/SeatManage.vue"),
+        meta: {
+          hidden: true,
+          requireAuth: true,
+          roles: ["ADMIN"], // 仅允许 "admin" 角色访问
+        },
+      },
     ],
   },
   {
@@ -185,7 +195,7 @@ export const routes: Array<RouteRecordRaw> = [
     meta: {
       hidden: true,
       requireAuth: true,
-      roles: ["ADMIN", "STUDENT"],
+      roles: ["STUDENT"],
     },
   },
   {
@@ -197,7 +207,7 @@ export const routes: Array<RouteRecordRaw> = [
     meta: {
       hidden: true,
       requireAuth: true,
-      roles: ["ADMIN", "STUDENT"],
+      roles: ["STUDENT"],
     },
   },
   {
@@ -209,7 +219,7 @@ export const routes: Array<RouteRecordRaw> = [
     meta: {
       hidden: true,
       requireAuth: true,
-      roles: ["ADMIN", "STUDENT"],
+      roles: ["STUDENT"],
     },
     children: [
       {

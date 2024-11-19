@@ -41,4 +41,5 @@ export type { MessageByAdminReqDto } from './models/MessageByAdminReqDto';
 export type { ReservationUpdateByAdminReqDto } from './models/ReservationUpdateByAdminReqDto';
 export type { GetAllReservationByAdminReqDto } from './models/GetAllReservationByAdminReqDto';
 export type { MessageAllByUserReqDto } from './models/MessageAllByUserReqDto';
+export type { UpdateSeatByAdminReqDto } from './models/UpdateSeatByAdminReqDto';
 export { Service } from './services/Service';

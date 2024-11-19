@@ -112,6 +112,7 @@
                 v-if="announcement.userId === userId"
                 type="primary"
                 @click="markAsFound(announcement.id)"
+                :disabled="true"
                 >本人发布</el-button
               >
             </div>

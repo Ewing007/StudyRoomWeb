@@ -44,6 +44,10 @@
             <el-icon><Setting /></el-icon>
             <span>日志管理</span>
           </el-menu-item>
+          <el-menu-item index="9" @click="navigateTo('/seatManage')">
+            <el-icon><Setting /></el-icon>
+            <span>座位管理</span>
+          </el-menu-item>
         </el-menu>
       </el-aside>
       <el-main class="main-content">
