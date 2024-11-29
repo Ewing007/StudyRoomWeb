@@ -143,7 +143,7 @@ export default {
   actions: {
     async updateUser({ commit, dispatch, state }, payload) {
       commit("setLoginUser", payload);
-      if (payload.isLogin && !this.state.user.userId) {
+      if (payload.isLogin && !state.user.userId) {
         // 用户登录时连接 WebSocket
         // websocketService = new WebSocketService(
         //   websocketUrl,
@@ -267,6 +267,6 @@ export default {
           (msg: { notificationId: string }) =>
             msg.notificationId !== notificationId
         );
-    ,
+    },
   },
 } as StoreOptions<any>;

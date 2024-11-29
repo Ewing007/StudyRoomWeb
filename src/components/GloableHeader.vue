@@ -22,9 +22,8 @@
             v-for="route in visibleRouters"
             :key="route.path"
             :index="route.path"
-          >{{ route.name }}
-          </el-menu-item
-          >
+            >{{ route.name }}
+          </el-menu-item>
         </el-menu>
       </el-col>
       <el-col :span="1" style="align-content: center">
@@ -325,8 +324,8 @@ const handleLogin = () => {
 const unreadMessages = computed(
   () =>
     store.state.user.notifications.systemNotifications?.length +
-    store.state.user.notifications.replyNotifications?.length +
-    store.state.user.notifications.checkInNotifications?.length || undefined
+      store.state.user.notifications.replyNotifications?.length +
+      store.state.user.notifications.checkInNotifications?.length || undefined
 );
 const unreadReplyMessages = computed(
   () => store.state.user.notifications.replyNotifications?.length || undefined
