@@ -116,25 +116,18 @@ const fetchCaptcha = async () => {
 
 const submitForm = async (loginForm: any) => {
   loading.value = true;
-  try {
-    const response = await Service.login(loginForm);
-    if (response.code === "200") {
-      ElMessage.success("登录成功");
-      (OpenAPI.HEADERS as any).Authorization = response.data.token;
-      await store.dispatch("user/updateUser", response.data.userDto);
-      await store.dispatch("user/setToken", response.data.token);
-      emit("login-success");
-      await router.push("/");
-    } else {
-      console.log("response:", response);
-      ElMessage.error(response.message || "登录失败，请重试");
-      fetchCaptcha(); // 刷新验证码
-    }
-  } catch (error) {
-    ElMessage.error("登录失败，请稍后重试");
-    fetchCaptcha(); // 刷新验证码
-  } finally {
+  const response = await Service.login(loginForm);
+  if (response.code === "200") {
+    ElMessage.success("登录成功");
+    (OpenAPI.HEADERS as any).Authorization = response.data.token;
+    await store.dispatch("user/updateUser", response.data.userDto);
+    await store.dispatch("user/setToken", response.data.token);
+    emit("login-success");
+    await router.push("/");
     loading.value = false;
+  } else {
+    ElMessage.error(response.message || "登录失败，请重试");
+    fetchCaptcha(); // 刷新验证码
   }
 };
 

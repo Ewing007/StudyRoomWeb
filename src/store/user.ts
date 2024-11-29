@@ -117,8 +117,8 @@ export default {
   namespaced: true,
   state: () => ({
     loginUser: {
-      userid: "",
-      username: "",
+      userId: "",
+      userName: "",
       phone: "",
       email: "",
       avatar: "",
@@ -143,7 +143,7 @@ export default {
   actions: {
     async updateUser({ commit, dispatch, state }, payload) {
       commit("setLoginUser", payload);
-      if (payload.isLogin && !state.user.userId) {
+      if (payload.isLogin && !this.state.user.userId) {
         // 用户登录时连接 WebSocket
         // websocketService = new WebSocketService(
         //   websocketUrl,
@@ -161,6 +161,7 @@ export default {
       window.sessionStorage.removeItem("token");
       (OpenAPI.HEADERS as any).Authorization = null;
       commit("clearUserInfo"); // 调用 mutation 清空用户信息
+      commit("clearNotifications");
       // 用户退出时断开 WebSocket
       // dispatch("disconnectWebSocket");
       // websocketService.setUserLoggedOut(true);
@@ -223,6 +224,13 @@ export default {
         roles: [],
         permission: [],
         isLogin: false,
+      };
+    },
+    clearNotifications(state) {
+      state.notifications = {
+        replyNotifications: [],
+        systemNotifications: [],
+        checkInNotifications: [],
       };
     },
     setLoginUser(state, payload) {
