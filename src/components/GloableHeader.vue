@@ -1,7 +1,7 @@
 <template>
   <div id="header">
     <el-row>
-      <el-col :span="22">
+      <el-col :span="20">
         <el-menu
           :default-active="activeIndex"
           mode="horizontal"
@@ -22,9 +22,99 @@
             v-for="route in visibleRouters"
             :key="route.path"
             :index="route.path"
-            >{{ route.name }}</el-menu-item
+          >{{ route.name }}
+          </el-menu-item
           >
         </el-menu>
+      </el-col>
+      <el-col :span="1" style="align-content: center">
+        <div
+          style="display: flex; align-items: center; position: relative"
+          @mouseleave="onMouseLeaveNotification"
+        >
+          <!-- 消息通知 -->
+          <div @click="openNotification" class="notification-container">
+            <el-badge
+              :value="unreadMessages"
+              :max="9"
+              :offset="[10, 2]"
+              class="item"
+            >
+              <img
+                style="
+                  width: 24px;
+                  height: auto;
+                  align-items: center;
+                  justify-content: center;
+                  display: flex;
+                "
+                src="../assets/通知中心.svg"
+                alt="通知中心"
+              />
+            </el-badge>
+          </div>
+          <div
+            v-if="showNotificationMenu"
+            class="notification-popup"
+            @mouseleave="onMouseLeaveNotification"
+            @mouseenter="onMouseEnterNotification"
+          >
+            <div
+              class="custom-button"
+              @click="goToMessageCenter('/MessageCenter/ReplyMessage')"
+            >
+              <el-badge
+                :value="unreadReplyMessages"
+                :max="9"
+                class="item"
+                :offset="[10, 2]"
+              >
+                <img
+                  src="../assets/回复消息.svg"
+                  alt="回复消息"
+                  class="button-icon"
+                />
+                回复消息
+              </el-badge>
+            </div>
+            <div
+              class="custom-button"
+              @click="goToMessageCenter('/MessageCenter/SystemMessage')"
+            >
+              <el-badge
+                :value="unreadSystemMessages"
+                :max="9"
+                class="item"
+                :offset="[10, 2]"
+              >
+                <img
+                  src="../assets/系统消息.svg"
+                  alt="系统消息"
+                  class="button-icon"
+                />
+                系统消息
+              </el-badge>
+            </div>
+            <div
+              class="custom-button"
+              @click="goToMessageCenter('/MessageCenter/CheckInMessage')"
+            >
+              <el-badge
+                :value="unreadCheckInMessages"
+                :max="9"
+                class="item"
+                :offset="[10, 2]"
+              >
+                <img
+                  src="../assets/签到.svg"
+                  alt="签到消息"
+                  class="button-icon"
+                />
+                签到消息
+              </el-badge>
+            </div>
+          </div>
+        </div>
       </el-col>
       <el-col :span="2" style="align-content: center">
         <div
@@ -46,13 +136,28 @@
             @mouseleave="onMouseLeave"
           >
             <template v-if="!loginStatus">
-              <div class="custom-button" @click="openLoginDialog">登录</div>
+              <div class="custom-button" @click="openLoginDialog">
+                <img src="../assets/登录.svg" alt="登录" class="button-icon" />
+                登录
+              </div>
             </template>
             <template v-else>
               <div class="custom-button" @click="goToProfile(userId)">
+                <img
+                  src="../assets/个人中心.svg"
+                  alt="个人中心"
+                  class="button-icon"
+                />
                 个人中心
               </div>
-              <div class="custom-button" @click="logout">退出登录</div>
+              <div class="custom-button" @click="logout">
+                <img
+                  src="../assets/退出登录.svg"
+                  alt="退出"
+                  class="button-icon"
+                />
+                退出登录
+              </div>
             </template>
           </div>
         </div>
@@ -107,6 +212,7 @@ router.afterEach((to) => {
 });
 
 const showMenu = ref(false);
+const showNotificationMenu = ref(false);
 const loginDialogVisible = ref(false);
 const registerDialogVisible = ref(false);
 const handleSelect = (key: string, keyPath: string[]) => {
@@ -151,9 +257,22 @@ const onMouseLeave = () => {
     showMenu.value = false;
   }, 1000); // 延迟 1000 毫秒后隐藏菜单
 };
-
+const hideNotificationMenuTimer = ref<any | null>(null);
+const onMouseLeaveNotification = () => {
+  if (hideNotificationMenuTimer.value) {
+    clearTimeout(hideNotificationMenuTimer.value);
+  }
+  hideNotificationMenuTimer.value = setTimeout(() => {
+    showNotificationMenu.value = false;
+  }, 1000); // 延迟 1000 毫秒后隐藏菜单
+};
+const onMouseEnterNotification = () => {
+  if (hideNotificationMenuTimer.value) {
+    clearTimeout(hideNotificationMenuTimer.value);
+  }
+  showNotificationMenu.value = true;
+};
 const goToProfile = (userId: string) => {
-  console.log("userId:", userId);
   router.push({ name: "UserProfile", params: { id: userId } });
   // router.push("/userProfile");
 };
@@ -169,6 +288,9 @@ const logout = async () => {
   }
 };
 
+const goToMessageCenter = (path: string) => {
+  router.push(path);
+};
 const store = useStore();
 const userId = computed(() => store.state.user.loginUser.userId);
 const roles = computed(() => store.state.user.loginUser.roles);
@@ -199,6 +321,26 @@ const handleRegister = () => {
 
 const handleLogin = () => {
   loginDialogVisible.value = false;
+};
+const unreadMessages = computed(
+  () =>
+    store.state.user.notifications.systemNotifications?.length +
+    store.state.user.notifications.replyNotifications?.length +
+    store.state.user.notifications.checkInNotifications?.length || undefined
+);
+const unreadReplyMessages = computed(
+  () => store.state.user.notifications.replyNotifications?.length || undefined
+);
+const unreadSystemMessages = computed(
+  () => store.state.user.notifications.systemNotifications?.length || undefined
+);
+const unreadCheckInMessages = computed(
+  () => store.state.user.notifications.checkInNotifications?.length || undefined
+);
+const openNotification = () => {
+  // 处理消息通知点击事件
+  showNotificationMenu.value = true;
+  // 可以在这里跳转到消息通知页面或弹出消息列表
 };
 </script>
 
@@ -236,6 +378,20 @@ const handleLogin = () => {
   }
 }
 
+.notification-popup {
+  position: absolute;
+  top: 65px; /* 使弹出层紧贴在图标下方 */
+  left: 50%; /* 水平居中 */
+  border-radius: 8px;
+  transform: translateX(-50%); /* 水平居中 */
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  width: 200px;
+  padding: 10px 0;
+  text-align: center;
+}
+
 .menu-popup {
   position: absolute;
   top: 80px;
@@ -247,6 +403,18 @@ const handleLogin = () => {
   z-index: 10;
   background-color: white;
   text-align: center;
+  /*<!-- -->*/
+  /*!*position: absolute;*!*/
+  /*top: 100%;*/
+  /*left: 0;*/
+  /*!*background-color: white;*!*/
+  /*border: 1px solid #dcdcdc;*/
+  /*box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);*/
+  /*padding: 10px;*/
+  /*z-index: 1000;*/
+  /*display: flex;*/
+  /*flex-direction: column;*/
+  /*align-items: flex-start;*/
 }
 
 .menu-popup .el-button {
@@ -263,7 +431,7 @@ const handleLogin = () => {
 }
 
 .login-dialog {
-  background: linear-gradient(135deg, #ffffff, #e0e0e0);
+  background: white;
 }
 
 .login-dialog .el-dialog__header {
@@ -291,16 +459,17 @@ const handleLogin = () => {
   background: none;
 }
 
-.menu-popup {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background-color: white;
-  border: 1px solid #dcdcdc;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  padding: 10px;
-  z-index: 1000;
-}
+/*.menu-popup {*/
+/*  position: absolute;*/
+/*  top: 80px;*/
+/*  top: 150%;*/
+/*  right: 0;*/
+/*  background-color: white;*/
+/*  border: 1px solid #dcdcdc;*/
+/*  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);*/
+/*  padding: 10px;*/
+/*  z-index: 1000;*/
+/*}*/
 
 .custom-button {
   cursor: pointer;
@@ -311,11 +480,50 @@ const handleLogin = () => {
   border: 1px solid transparent;
   border-radius: 4px;
   transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+
+  display: flex;
+  align-items: center;
+  /*cursor: pointer;*/
+  /*padding: 8px 16px;*/
+  /*margin: 5px 0;*/
+  /*text-align: left;*/
+  /*color: #333;*/
+  /*border: 1px solid transparent;*/
+  /*border-radius: 4px;*/
+  /*transition: background-color 0.3s, color 0.3s, border-color 0.3s;*/
 }
 
 .custom-button:hover {
   background-color: #f0f0f0;
   color: #007bff;
   border-color: #e0e0e0;
+}
+
+.notification-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.notification-container:hover {
+  transform: scale(1.1);
+}
+
+.notification-container:active {
+  transform: scale(0.9);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button-icon {
+  width: 20px;
+  height: 16px;
+  padding-right: 20px;
 }
 </style>

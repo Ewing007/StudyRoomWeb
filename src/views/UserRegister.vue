@@ -77,7 +77,7 @@
 
 <script lang="ts" setup>
 import { defineEmits, reactive, ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage, FormInstance } from "element-plus";
 import { Service } from "../../generated"; // 确保你有这个路径
 
@@ -138,9 +138,12 @@ const submitForm = async (registerForm: any) => {
 };
 
 // 跳转到登录页面
+const route = useRoute();
 const goToLogin = () => {
+  if (route.name === "注册" || route.path === "/register") {
+    router.push("/login");
+  }
   emit("login-open");
-  // router.push("/login"); // 确保你的登录页面路由设置正确
 };
 
 // 页面加载时获取验证码
@@ -153,7 +156,8 @@ fetchCaptcha();
   align-items: center;
   justify-content: center;
   height: 100vh;
-  background: linear-gradient(135deg, #f0f2f5, #e8eff0);
+  /*background: linear-gradient(135deg, #f0f2f5, #e8eff0);*/
+  background: white;
   padding: 20px;
 }
 

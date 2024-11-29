@@ -71,7 +71,7 @@
 
 <script lang="ts" setup>
 import { reactive, ref, defineEmits } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage, FormInstance } from "element-plus";
 import { OpenAPI, Service } from "../../generated";
 import { useStore } from "vuex";
@@ -138,7 +138,11 @@ const submitForm = async (loginForm: any) => {
   }
 };
 
+const route = useRoute();
 const goToRegister = () => {
+  if (route.name === "登录" || route.path === "/login") {
+    router.push("/register");
+  }
   emit("register-open");
 };
 

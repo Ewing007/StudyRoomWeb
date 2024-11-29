@@ -249,7 +249,7 @@ onUnmounted(() => {
   color: #333;
   font-weight: 500;
   text-align: center;
-  padding: 0 10px;
+  /*padding: 0 10px;*/
   animation: scroll-text linear infinite;
   transition: all 0.3s ease;
   min-height: 100%;
@@ -257,7 +257,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   background: none;
-  padding-left: 100px;
+  /*padding-left: 100px;*/
 }
 
 .study-room-section {
@@ -313,10 +313,10 @@ onUnmounted(() => {
 }
 @keyframes scroll-text {
   0% {
-    transform: translateX(100%);
+    transform: translateX(calc(100% - 60px));
   }
   100% {
-    transform: translateX(-100%);
+    transform: translateX(calc(-100% + 60px));
   }
 }
 

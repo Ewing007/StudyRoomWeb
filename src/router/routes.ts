@@ -58,6 +58,48 @@ export const routes: Array<RouteRecordRaw> = [
       hidden: true,
     },
   },
+  {
+    path: "/MessageCenter",
+    name: "消息中心",
+    component: () => import("../components/MessageIndex.vue"),
+    meta: {
+      hidden: true,
+      // requireAuth: true,
+      // roles: ["ADMIN", "STUDENT"],
+    },
+    children: [
+      {
+        path: "/MessageCenter/ReplyMessage",
+        name: "回复消息",
+        component: () => import("../views/Message/ReplyMessage.vue"),
+        meta: {
+          hidden: true,
+          // requireAuth: true,
+          // roles: ["ADMIN", "STUDENT"],
+        },
+      },
+      {
+        path: "/MessageCenter/SystemMessage",
+        name: "系统消息",
+        component: () => import("../views/Message/SystemMessage.vue"),
+        meta: {
+          hidden: true,
+          // requireAuth: true,
+          // roles: ["ADMIN", "STUDENT"],
+        },
+      },
+      {
+        path: "/MessageCenter/CheckInMessage",
+        name: "签到消息",
+        component: () => import("../views/Message/CheckInMessage.vue"),
+        meta: {
+          hidden: true,
+          // requireAuth: true,
+          // roles: ["ADMIN", "STUDENT"],
+        },
+      },
+    ],
+  },
   // {
   //   path: "/test",
   //   name: "测试",
